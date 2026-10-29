@@ -116,6 +116,8 @@ h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(24px, 
 .seg button { border: 0; background: var(--panel); padding: 6px 10px; cursor: pointer; font-size: 13px; color: var(--muted); }
 .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); font-weight: 600; }
 .spacer { flex: 1; }
+.xlink { display: inline-block; margin: 0 0 12px; font-size: 14px; font-weight: 500; color: var(--accent); text-decoration: none; border: 1px solid var(--accent-soft); background: var(--accent-soft); border-radius: 6px; padding: 5px 10px; }
+.xlink:hover { border-color: var(--accent); }
 .btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
 .compare { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .codebar .tag { font-family: var(--font-sans, inherit); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; margin-right: 8px; }
@@ -227,6 +229,7 @@ body[data-lang="vi"] .en { display: none; }
   <aside class="rail" aria-label="Exercises">
     <p class="brand">EmbedIT Review Drills</p>
     <p class="brand-sub" id="brandSub">23 bài code review .NET · đáp án song ngữ</p>
+    <a class="xlink" href="linq/index.html">LINQ live coding (dạng đề demo) →</a>
     <div class="progress"><span id="progText">0 / 269 lỗi đã tìm ra</span><div class="bar"><i id="progBar"></i></div></div>
     <div class="filters" id="filters" role="group" aria-label="Lọc theo độ khó"></div>
     <ol class="list" id="list"></ol>
@@ -250,6 +253,7 @@ body[data-lang="vi"] .en { display: none; }
     <div class="wrap">
       <div class="mobile-pick">
         <p class="brand">EmbedIT Review Drills</p>
+        <a class="xlink" href="linq/index.html">LINQ live coding (dạng đề demo) →</a>
         <label for="pick" class="brand-sub" style="margin:0">Chọn bài</label>
         <select id="pick"></select>
       </div>
