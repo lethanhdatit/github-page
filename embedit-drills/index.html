@@ -130,7 +130,18 @@ body.rail-off .mobile-pick { display: grid; gap: 8px; max-width: 520px; }
 body.rail-off .wrap { max-width: 1240px; }
 body.rail-off.with-fix .wrap { max-width: none; }
 .railbtn svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; }
-@media (min-width: 1180px) { body.with-fix .compare { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+/* Side-by-side review with a draggable divider, like a split diff */
+.splitter { display: none; }
+@media (min-width: 1180px) {
+  body.with-fix .compare { grid-template-columns: minmax(0, var(--left, 1fr)) 14px minmax(0, var(--right, 1fr)); gap: 0; align-items: stretch; }
+  body.with-fix .splitter { display: flex; justify-content: center; align-items: flex-start; cursor: col-resize; touch-action: none; position: relative; outline: none; }
+  body.with-fix .splitter::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; border-radius: 2px; background: var(--line); transition: background .15s, width .15s; }
+  body.with-fix .splitter:hover::before, body.with-fix .splitter:focus-visible::before, body.with-fix .splitter.dragging::before { width: 4px; background: var(--accent); }
+  body.with-fix .splitter .grip { position: sticky; top: 45vh; margin-top: 120px; z-index: 1; width: 12px; height: 36px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center; }
+  body.with-fix .splitter .grip::after { content: ""; width: 4px; height: 16px; border-left: 1px solid var(--muted); border-right: 1px solid var(--muted); }
+  body.with-fix .compare .codebox { align-self: start; }
+}
+body.splitting { cursor: col-resize; user-select: none; }
 
 .workbench { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .codebox { background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
@@ -269,6 +280,7 @@ body[data-lang="vi"] .en { display: none; }
             <div class="codebar"><span><span class="tag before">Chưa fix</span><span id="fileName">PullRequest.cs</span></span><span id="lineCount"></span></div>
             <div class="code" id="code"></div>
           </div>
+          <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="Kéo để đổi độ rộng hai khung code" aria-valuemin="15" aria-valuemax="85" aria-valuenow="50" tabindex="0" title="Kéo để chỉnh độ rộng · nhấp đúp để chia đều · phím ← →"><span class="grip"></span></div>
           <div class="codebox fixbox" id="fixBox" hidden>
             <div class="codebar"><span><span class="tag after">Bản fix hoàn chỉnh</span><span id="fixName">Fixed.cs</span></span><span id="fixCount"></span></div>
             <div class="code" id="fixCode"></div>
@@ -2938,6 +2950,48 @@ window.FIXED = {"1": "// Request DTO: the client can't set Total, CustomerId or 
   }
   renderRail();
   $("railToggle").addEventListener("click", () => { railOff = !railOff; store.set("rd:railOff", railOff); renderRail(); });
+  // Draggable divider between original and fixed code (percentage of the left pane)
+  let split = store.get("rd:split", 50);
+  function applySplit() {
+    split = Math.min(85, Math.max(15, Math.round(split)));
+    const c = document.querySelector(".compare");
+    c.style.setProperty("--left", split + "fr");
+    c.style.setProperty("--right", (100 - split) + "fr");
+    $("splitter").setAttribute("aria-valuenow", String(split));
+  }
+  applySplit();
+  (() => {
+    const sp = $("splitter"), compare = document.querySelector(".compare");
+    let dragging = false;
+    const move = e => {
+      if (!dragging) return;
+      const r = compare.getBoundingClientRect();
+      split = (e.clientX - r.left) / r.width * 100;
+      applySplit();
+    };
+    sp.addEventListener("pointerdown", e => {
+      dragging = true; sp.setPointerCapture(e.pointerId);
+      sp.classList.add("dragging"); document.body.classList.add("splitting");
+    });
+    sp.addEventListener("pointermove", move);
+    const end = () => {
+      if (!dragging) return;
+      dragging = false; sp.classList.remove("dragging"); document.body.classList.remove("splitting");
+      store.set("rd:split", split);
+    };
+    sp.addEventListener("pointerup", end);
+    sp.addEventListener("pointercancel", end);
+    sp.addEventListener("dblclick", () => { split = 50; applySplit(); store.set("rd:split", split); });
+    sp.addEventListener("keydown", e => {
+      const step = e.shiftKey ? 10 : 3;
+      if (e.key === "ArrowLeft") split -= step;
+      else if (e.key === "ArrowRight") split += step;
+      else if (e.key === "Home") split = 15;
+      else if (e.key === "End") split = 85;
+      else return;
+      e.preventDefault(); applySplit(); store.set("rd:split", split);
+    });
+  })();
   $("fixToggle").addEventListener("click", () => {
     showFix = !showFix; store.set("rd:showFix", showFix); renderFix();
     if (showFix) $("fixBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
